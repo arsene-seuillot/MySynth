@@ -1,0 +1,20 @@
+# Ignorer les fichiers de build
+/Builds/
+/cmake-build-debug/
+/CMakeLists.txt.user
+/bin/
+/intermediate/
+/JUCE/
+/*.exe
+/*.dll
+/*.a
+/*.lib
+/*.so
+/*.vst3
+
+# Projucer
+/*.jucer_backup
+
+# Ignorer les fichiers spécifiques à l'IDE
+.idea/
+.vscode/
