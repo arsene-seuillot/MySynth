@@ -10,6 +10,12 @@
 
 #include <JuceHeader.h>
 
+#define JucePlugin_IsSynth                1
+#define JucePlugin_WantsMidiInput         1
+#define JucePlugin_ProducesMidiOutput     0
+#define JucePlugin_IsMidiEffect           0
+
+
 //==============================================================================
 /**
 */
@@ -56,4 +62,9 @@ public:
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MySynthAudioProcessor)
+    
+    float phase = 0.0f;
+    float frequency = 440.0f;
+    float currentSampleRate = 44100.0;
+    bool isNotePlaying = false; // Variable pour suivre si une note est active
 };
