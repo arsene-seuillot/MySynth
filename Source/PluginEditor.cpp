@@ -13,8 +13,18 @@
 MySynthAudioProcessorEditor::MySynthAudioProcessorEditor (MySynthAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
+    
+    addAndMakeVisible(fader);
+    fader.setSliderStyle(juce::Slider::SliderStyle::LinearVertical);
+    fader.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 80, 32);
+    fader.setRange(0.0,1, 0.9999);
+    fader.setColour(juce::Slider::ColourIds::trackColourId, juce::Colours::whitesmoke);
+    fader.setDoubleClickReturnValue(true, 0.0);
+    
+    // On attache le fader au paramètre "gain" de treeState.
+    faderAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.treeState, "tail-off", fader);
+    
+    // Taille de la fenêtre
     setSize (400, 300);
 }
 

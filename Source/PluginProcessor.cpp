@@ -19,17 +19,62 @@ MySynthAudioProcessor::MySynthAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ), treeState(*this, nullptr, "PARAMETERS", createParameterLayout())
 #endif
 {
+    // Paramètres globaux du synthé
     synth.clearVoices();
+    
+    // On ajoute 8 voix possibles pour le synthé
     for (int i=0; i<8; i++) synth.addVoice(new SineWaveVoice());
     synth.clearSounds();
     synth.addSound(new SineWaveSound);
+    
+    // Listener pour les variables du synthé
+    treeState.addParameterListener("gain", this);
+    treeState.addParameterListener("tail-off", this);
+    
 }
 
 MySynthAudioProcessor::~MySynthAudioProcessor()
 {
+    treeState.removeParameterListener("gain", this);
+    treeState.removeParameterListener("tail-off", this);
+}
+
+// ON IMPLÉMENTE LA FONCTION QUI CRÉÉE LA LISTE DES PARAMÈTERES DE L'AUDIO-TREE
+juce::AudioProcessorValueTreeState::ParameterLayout MySynthAudioProcessor::createParameterLayout() {
+    
+    std::vector <std::unique_ptr<juce::RangedAudioParameter>> params;
+    
+    // Ici on crée les différents paramètres du ParameterLayout
+    auto pGain = std::make_unique<juce::AudioParameterFloat>("gain", "Gain", -24.0, 24.0, 10.0);
+    auto pTailOff = std::make_unique<juce::AudioParameterFloat>("tail-off", "Tail Off", 0.0f, 1.0f, 0.5f); // Décroissance du volume
+        
+    params.push_back(std::move(pTailOff));
+    params.push_back(std::move(pGain));
+    
+    return {params.begin(), params.end()};
+}
+
+// MÉTHODE POUR NE METTRE À JOUR LES VALEURS QUE QUAND ELLES CHANGENT
+void MySynthAudioProcessor::parameterChanged(const juce::String &parameterID, float newValue) {
+    
+    // Quand une nouvelle valeur est détectée dans le listener, newValue prend cette valeur
+    // et on sait quel paramètre est concerné avec parameterID.
+
+    if (parameterID == "gain") {
+        val = juce::Decibels::decibelsToGain(newValue);
+    }
+    else if (parameterID == "tail-off") {
+    // Met à jour le facteur de décroissance dans toutes les voix
+        for (int i = 0; i < synth.getNumVoices(); ++i) {
+            auto* voice = synth.getVoice(i);
+            if (auto* sineVoice = dynamic_cast<SineWaveVoice*>(voice)) {
+                sineVoice->setTailOff(newValue);  // Met à jour le facteur tail-off
+            }
+        }
+    }
 }
 
 //==============================================================================
@@ -151,7 +196,8 @@ bool MySynthAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* MySynthAudioProcessor::createEditor()
 {
-    return new MySynthAudioProcessorEditor (*this);
+    return new juce::GenericAudioProcessorEditor(*this);
+    //return new MySynthAudioProcessorEditor (*this);
 }
 
 //==============================================================================

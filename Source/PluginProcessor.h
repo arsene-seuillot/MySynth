@@ -1,21 +1,10 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
-
 #pragma once
 
 #include <JuceHeader.h>
 
-
-
 //==============================================================================
-/**
-*/
-class MySynthAudioProcessor  : public juce::AudioProcessor
+// MySynthAudioProcessor
+class MySynthAudioProcessor  : public juce::AudioProcessor, juce::AudioProcessorValueTreeState::Listener
 {
 public:
     //==============================================================================
@@ -54,6 +43,9 @@ public:
     //==============================================================================
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
+    
+    // DÉCLARATION DU VALUE-TREE
+    juce::AudioProcessorValueTreeState treeState;
 
 private:
     //==============================================================================
@@ -62,17 +54,25 @@ private:
     float phase = 0.0f;
     float frequency = 440.0f;
     float currentSampleRate = 44100.0;
-    bool isNotePlaying = false; // Variable pour suivre si une note est active
+    bool isNotePlaying = false;  // Variable pour suivre si une note est active
     
+    // On déclare l'objet synthétiseur
     juce::Synthesiser synth;
+    
+    // On déclare les variables du synthé
+    float val = 0.0f;
+    
+    // On crée un audio-tree pour lier des valeurs à des variables
+    juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+    void parameterChanged(const juce::String &parameterID, float newValue) override;
 };
 
-
+//==============================================================================
+// SineWaveVoice
 class SineWaveVoice : public juce::SynthesiserVoice
 {
-    
 public:
-    SineWaveVoice() {}
+    SineWaveVoice() : tailoff(false), tailoffFactor(0.9999f), currentAngle(0.0), angleDelta(0.0), level(0.0), frequency(440.0f) {}
 
     bool canPlaySound(juce::SynthesiserSound* sound) override
     {
@@ -83,7 +83,7 @@ public:
                    juce::SynthesiserSound*, int currentPitchWheelPosition) override
     {
         auto sampleRate = getSampleRate();
-        if (sampleRate <= 0.0) return; // Vérifie que le sample rate est valide
+        if (sampleRate <= 0.0) return;  // Vérifie que le sample rate est valide
 
         currentAngle = 0.0;
         level = velocity;
@@ -91,12 +91,12 @@ public:
         angleDelta = (juce::MathConstants<double>::twoPi * frequency) / sampleRate;
     }
 
-
     void stopNote(float velocity, bool allowTailOff) override
     {
         if (allowTailOff)
         {
-            if (tailoff == false) tailoff = true;
+            if (!tailoff)
+                tailoff = true;
         }
         else
         {
@@ -104,13 +104,16 @@ public:
             clearCurrentNote();
         }
     }
+
+    void setTailOff(float newTailOff)
+    {
+        tailoffFactor = newTailOff;
+    }
     
-    // C'est cette fonction qui est appelée en boucle pour générer le son
     void renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override
     {
         if (angleDelta > 0.0)
         {
-            // On boucle sur tous les samples
             for (int sample = 0; sample < numSamples; ++sample)
             {
                 float sampleValue = std::sin(currentAngle) * level;
@@ -119,13 +122,12 @@ public:
 
                 currentAngle += angleDelta;
                 if (currentAngle > juce::MathConstants<double>::twoPi)
-                                currentAngle -= juce::MathConstants<double>::twoPi;
+                    currentAngle -= juce::MathConstants<double>::twoPi;
                 
-                // On fait diminuer le volume de la note jusqu'à la supprimer
-                if (tailoff == true)
+                // Appliquer la décroissance (tail-off)
+                if (tailoff)
                 {
-                    level *= 0.9999;
-                    
+                    level *= (1-(0.5*tailoffFactor*tailoffFactor)*0.0005);
                     if (level < 0.001)
                     {
                         clearCurrentNote();
@@ -134,6 +136,7 @@ public:
                         break;
                     }
                 }
+
                 ++startSample;
             }
         }
@@ -143,20 +146,19 @@ public:
     void controllerMoved(int controllerNumber, int newControllerValue) override {}
 
 private:
-    double currentAngle = 0.0;
-    double angleDelta = 0.0;
-    double level = 0.0;
-    double frequency = 440.0;
+    double currentAngle;
+    double angleDelta;
+    double level;
+    double frequency;
     bool tailoff;
+    float tailoffFactor;  // Facteur de décroissance
 };
 
-
-
+//==============================================================================
+// SineWaveSound
 class SineWaveSound : public juce::SynthesiserSound
 {
 public:
     bool appliesToNote(int /*midiNoteNumber*/) override { return true; }
     bool appliesToChannel(int /*midiChannel*/) override { return true; }
 };
-
-        
