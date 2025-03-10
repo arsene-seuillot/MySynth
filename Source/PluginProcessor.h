@@ -10,10 +10,6 @@
 
 #include <JuceHeader.h>
 
-#define JucePlugin_IsSynth                1
-#define JucePlugin_WantsMidiInput         1
-#define JucePlugin_ProducesMidiOutput     0
-#define JucePlugin_IsMidiEffect           0
 
 
 //==============================================================================
@@ -67,4 +63,100 @@ private:
     float frequency = 440.0f;
     float currentSampleRate = 44100.0;
     bool isNotePlaying = false; // Variable pour suivre si une note est active
+    
+    juce::Synthesiser synth;
 };
+
+
+class SineWaveVoice : public juce::SynthesiserVoice
+{
+    
+public:
+    SineWaveVoice() {}
+
+    bool canPlaySound(juce::SynthesiserSound* sound) override
+    {
+        return true;
+    }
+
+    void startNote(int midiNoteNumber, float velocity,
+                   juce::SynthesiserSound*, int currentPitchWheelPosition) override
+    {
+        auto sampleRate = getSampleRate();
+        if (sampleRate <= 0.0) return; // Vérifie que le sample rate est valide
+
+        currentAngle = 0.0;
+        level = velocity;
+        frequency = juce::MidiMessage::getMidiNoteInHertz(midiNoteNumber);
+        angleDelta = (juce::MathConstants<double>::twoPi * frequency) / sampleRate;
+    }
+
+
+    void stopNote(float velocity, bool allowTailOff) override
+    {
+        if (allowTailOff)
+        {
+            if (tailoff == false) tailoff = true;
+        }
+        else
+        {
+            level = 0.0;
+            clearCurrentNote();
+        }
+    }
+    
+    // C'est cette fonction qui est appelée en boucle pour générer le son
+    void renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override
+    {
+        if (angleDelta > 0.0)
+        {
+            // On boucle sur tous les samples
+            for (int sample = 0; sample < numSamples; ++sample)
+            {
+                float sampleValue = std::sin(currentAngle) * level;
+                for (int channel = 0; channel < outputBuffer.getNumChannels(); ++channel)
+                    outputBuffer.addSample(channel, startSample, sampleValue);
+
+                currentAngle += angleDelta;
+                if (currentAngle > juce::MathConstants<double>::twoPi)
+                                currentAngle -= juce::MathConstants<double>::twoPi;
+                
+                // On fait diminuer le volume de la note jusqu'à la supprimer
+                if (tailoff == true)
+                {
+                    level *= 0.9999;
+                    
+                    if (level < 0.001)
+                    {
+                        clearCurrentNote();
+                        level = 0.0;
+                        tailoff = false;
+                        break;
+                    }
+                }
+                ++startSample;
+            }
+        }
+    }
+
+    void pitchWheelMoved(int newPitchWheelValue) override {}
+    void controllerMoved(int controllerNumber, int newControllerValue) override {}
+
+private:
+    double currentAngle = 0.0;
+    double angleDelta = 0.0;
+    double level = 0.0;
+    double frequency = 440.0;
+    bool tailoff;
+};
+
+
+
+class SineWaveSound : public juce::SynthesiserSound
+{
+public:
+    bool appliesToNote(int /*midiNoteNumber*/) override { return true; }
+    bool appliesToChannel(int /*midiChannel*/) override { return true; }
+};
+
+        

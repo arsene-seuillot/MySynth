@@ -22,6 +22,10 @@ MySynthAudioProcessor::MySynthAudioProcessor()
                        )
 #endif
 {
+    synth.clearVoices();
+    for (int i=0; i<8; i++) synth.addVoice(new SineWaveVoice());
+    synth.clearSounds();
+    synth.addSound(new SineWaveSound);
 }
 
 MySynthAudioProcessor::~MySynthAudioProcessor()
@@ -94,7 +98,9 @@ void MySynthAudioProcessor::changeProgramName (int index, const juce::String& ne
 void MySynthAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     currentSampleRate = sampleRate;
+    synth.setCurrentPlaybackSampleRate(sampleRate); // IMPORTANT: Définir le sample rate du synthétiseur
 }
+
 
 void MySynthAudioProcessor::releaseResources()
 {
@@ -128,47 +134,12 @@ bool MySynthAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) 
 }
 #endif
 
-void MySynthAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void MySynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    buffer.clear(); // Effacer le buffer pour éviter des artefacts sonores
-    
-    // Analyse des messages MIDI
-        for (const auto metadata : midiMessages)
-        {
-            auto message = metadata.getMessage();
-            
-            // Gestion des messages NoteOn
-            if (message.isNoteOn())
-            {
-                frequency = juce::MidiMessage::getMidiNoteInHertz(message.getNoteNumber());
-                isNotePlaying = true;  // La note commence à jouer
-                phase = 0.0f;  // Réinitialisation de la phase pour éviter des clics
-            }
-            // Gestion des messages NoteOff
-            else if (message.isNoteOff())
-            {
-                isNotePlaying = false;  // La note est relâchée
-            }
-        }
-    
-
-    auto* leftChannel = buffer.getWritePointer(0);
-    auto* rightChannel = buffer.getWritePointer(1);
-    
-    for (int i = 0; i < buffer.getNumSamples(); ++i)
-    {        
-        if (isNotePlaying) {
-            float sample = std::sin(phase); // Joue uniquement si une note est active
-            phase += 2.0f * juce::MathConstants<float>::pi * frequency / currentSampleRate;
-            
-            if (phase > 2.0f * juce::MathConstants<float>::pi)
-                phase -= 2.0f * juce::MathConstants<float>::pi;
-            
-            leftChannel[i] = sample;
-            rightChannel[i] = sample;
-        }
-    }
+    buffer.clear(); // Effacer l'ancien buffer audio
+    synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
 }
+
 
 
 
