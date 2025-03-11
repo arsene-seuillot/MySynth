@@ -33,6 +33,7 @@ MySynthAudioProcessor::MySynthAudioProcessor()
     // Listener pour les variables du synthé
     treeState.addParameterListener("gain", this);
     treeState.addParameterListener("tail-off", this);
+    treeState.addParameterListener("tail-in", this);
     
 }
 
@@ -40,6 +41,7 @@ MySynthAudioProcessor::~MySynthAudioProcessor()
 {
     treeState.removeParameterListener("gain", this);
     treeState.removeParameterListener("tail-off", this);
+    treeState.removeParameterListener("tail-in", this);
 }
 
 // ON IMPLÉMENTE LA FONCTION QUI CRÉÉE LA LISTE DES PARAMÈTERES DE L'AUDIO-TREE
@@ -50,8 +52,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout MySynthAudioProcessor::creat
     // Ici on crée les différents paramètres du ParameterLayout
     auto pGain = std::make_unique<juce::AudioParameterFloat>("gain", "Gain", -24.0, 24.0, 10.0);
     auto pTailOff = std::make_unique<juce::AudioParameterFloat>("tail-off", "Tail Off", 0.0f, 1.0f, 0.5f); // Décroissance du volume
+    auto pTailIn = std::make_unique<juce::AudioParameterFloat>("tail-in", "Tail In", 0.0f, 1.0f, 0.5f); // Décroissance du volume
         
     params.push_back(std::move(pTailOff));
+    params.push_back(std::move(pTailIn));
     params.push_back(std::move(pGain));
     
     return {params.begin(), params.end()};
@@ -72,6 +76,15 @@ void MySynthAudioProcessor::parameterChanged(const juce::String &parameterID, fl
             auto* voice = synth.getVoice(i);
             if (auto* sineVoice = dynamic_cast<SineWaveVoice*>(voice)) {
                 sineVoice->setTailOff(newValue);  // Met à jour le facteur tail-off
+            }
+        }
+    }
+    else if (parameterID == "tail-in") {
+    // Met à jour le facteur de croissance dans toutes les voix
+        for (int i = 0; i < synth.getNumVoices(); ++i) {
+            auto* voice = synth.getVoice(i);
+            if (auto* sineVoice = dynamic_cast<SineWaveVoice*>(voice)) {
+                sineVoice->setTailIn(newValue);  // Met à jour le facteur tail-in
             }
         }
     }

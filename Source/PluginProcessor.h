@@ -86,7 +86,10 @@ public:
         if (sampleRate <= 0.0) return;  // Vérifie que le sample rate est valide
 
         currentAngle = 0.0;
-        level = velocity;
+        volume = velocity;
+        // On fait commencer à preque 0 pour le tail-in, > 0.001 pour éviter les conflits avec le tailoff
+        level = 0.002;
+        tailoff = false;
         frequency = juce::MidiMessage::getMidiNoteInHertz(midiNoteNumber);
         angleDelta = (juce::MathConstants<double>::twoPi * frequency) / sampleRate;
     }
@@ -103,11 +106,16 @@ public:
             level = 0.0;
             clearCurrentNote();
         }
+        tailoff = true;
     }
 
     void setTailOff(float newTailOff)
     {
         tailoffFactor = newTailOff;
+    }
+    void setTailIn(float newTailIn)
+    {
+        tailinFactor = newTailIn;
     }
     
     void renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override
@@ -124,10 +132,26 @@ public:
                 if (currentAngle > juce::MathConstants<double>::twoPi)
                     currentAngle -= juce::MathConstants<double>::twoPi;
                 
+                // Appliquer une montée progressive du volume (tail-in)
+                if (!tailoff && level < volume && level > 0.001)
+                {
+                    {
+                        level += (volume - level) *(1-tailinFactor) * 0.001f; // Montée fluide
+                    }
+                    if (tailinFactor == 0.0f)
+                    {
+                        level = volume;
+                    }
+                    if (level > volume)
+                        level = volume; // Évite de dépasser la valeur cible
+                }
+
+                
+                
                 // Appliquer la décroissance (tail-off)
                 if (tailoff)
                 {
-                    level *= (1-(0.5*tailoffFactor*tailoffFactor)*0.0005);
+                    level *= (1-(0.7*tailoffFactor*tailoffFactor)*0.0005);
                     if (level < 0.001)
                     {
                         clearCurrentNote();
@@ -148,10 +172,12 @@ public:
 private:
     double currentAngle;
     double angleDelta;
-    double level;
+    double level;  // volume effectif joué
+    double volume; // On le définit pour fixer le volume souhaité
     double frequency;
     bool tailoff;
     float tailoffFactor;  // Facteur de décroissance
+    float tailinFactor; // Facteur de croissance
 };
 
 //==============================================================================
