@@ -74,7 +74,15 @@ private:
 class SineWaveVoice : public juce::SynthesiserVoice
 {
 public:
-    SineWaveVoice() : tailoff(false), tailoffFactor(0.9999f), currentAngle(0.0), angleDelta(0.0), level(0.0), frequency(440.0f) {}
+    SineWaveVoice()
+        : tailoff(false),
+          tailoffFactor(0.9999f),
+          tailinFactor(0.0f),  // Ajoute la valeur d'initialisation de tailinFactor
+          currentAngle(0.0),
+          angleDelta(0.0),
+          level(0.0),
+          frequency(440.0f)
+    {}
 
     bool canPlaySound(juce::SynthesiserSound* sound) override
     {
@@ -147,8 +155,6 @@ public:
                     if (level > volume)
                         level = volume; // Évite de dépasser la valeur cible
                 }
-
-                
                 
                 // Appliquer la décroissance (tail-off)
                 if (tailoff)
@@ -172,17 +178,15 @@ public:
     void controllerMoved(int controllerNumber, int newControllerValue) override {}
 
 private:
-    
-    // Déclaration des variables utiles
-    double currentAngle;
-    double volume; // On le définit pour fixer le volume souhaité
+    // Déclaration des variables
     bool tailoff;
     float tailoffFactor;  // Facteur de décroissance
+    float tailinFactor;   // Facteur de croissance
+    double currentAngle;
     double angleDelta;
-    float tailinFactor; // Facteur de croissance
     double level;  // volume effectif joué
     double frequency;
-    
+    double volume; // On le définit pour fixer le volume souhaité
 };
 
 //==============================================================================
