@@ -53,10 +53,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout MySynthAudioProcessor::creat
     auto pGain = std::make_unique<juce::AudioParameterFloat>("gain", "Gain", -24.0, 24.0, 10.0);
     auto pTailOff = std::make_unique<juce::AudioParameterFloat>("tail-off", "Tail Off", 0.0f, 1.0f, 0.5f); // Décroissance du volume
     auto pTailIn = std::make_unique<juce::AudioParameterFloat>("tail-in", "Tail In", 0.0f, 1.0f, 0.5f); // Décroissance du volume
+    auto pFrequency = std::make_unique<juce::AudioParameterFloat>("frequency", "Frequency", 0.1f, 23000.0f, 10000.5f);
         
     params.push_back(std::move(pTailOff));
     params.push_back(std::move(pTailIn));
     params.push_back(std::move(pGain));
+    params.push_back(std::move(pFrequency));
     
     return {params.begin(), params.end()};
 }

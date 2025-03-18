@@ -175,13 +175,14 @@ private:
     
     // Déclaration des variables utiles
     double currentAngle;
-    double angleDelta;
-    double level;  // volume effectif joué
     double volume; // On le définit pour fixer le volume souhaité
-    double frequency;
     bool tailoff;
     float tailoffFactor;  // Facteur de décroissance
+    double angleDelta;
     float tailinFactor; // Facteur de croissance
+    double level;  // volume effectif joué
+    double frequency;
+    
 };
 
 //==============================================================================
