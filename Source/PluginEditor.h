@@ -23,7 +23,7 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
-    void timerCallback() override;
+    void timerCallback() override; // fonction executée à chaque clic du timer
 
 private:
     // This reference is provided as a quick way for your editor to

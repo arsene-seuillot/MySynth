@@ -90,6 +90,12 @@ void MySynthAudioProcessor::parameterChanged(const juce::String &parameterID, fl
     }
 }
 
+// Récupère la valeur du paramètre "tail-off"
+float MySynthAudioProcessor::getParameterValue(const juce::String& parameterID) const
+{
+    return *treeState.getRawParameterValue(parameterID); // Retourne la valeur de "tail-off"
+}
+
 //==============================================================================
 const juce::String MySynthAudioProcessor::getName() const
 {
@@ -233,3 +239,4 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new MySynthAudioProcessor();
 }
+

@@ -41,7 +41,7 @@ MySynthAudioProcessorEditor::MySynthAudioProcessorEditor (MySynthAudioProcessor&
     infoLabel.setJustificationType(juce::Justification::centred);
     infoLabel.setText("Frequency : 0 Hz", juce::dontSendNotification);
     addAndMakeVisible(infoLabel);
-    startTimer(100); // Rafraîchissement toutes les 100ms
+    startTimer(10); // Rafraîchissement toutes les 10ms
     
     // Taille de la fenêtre
     setSize (400, 300);
@@ -69,5 +69,6 @@ void MySynthAudioProcessorEditor::resized()
 
 void MySynthAudioProcessorEditor::timerCallback()
 {
-    infoLabel.setText("Ceci est un test", juce::dontSendNotification);
+    float tailoffValue = audioProcessor.getParameterValue("tail-off");
+    infoLabel.setText("Tailoff: " + juce::String(tailoffValue, 2), juce::dontSendNotification);
 }

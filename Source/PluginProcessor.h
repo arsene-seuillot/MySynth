@@ -46,6 +46,8 @@ public:
     
     // DÉCLARATION DU VALUE-TREE
     juce::AudioProcessorValueTreeState treeState;
+    
+    float getParameterValue(const juce::String& parameterID) const;
 
 private:
     //==============================================================================
@@ -170,6 +172,8 @@ public:
     void controllerMoved(int controllerNumber, int newControllerValue) override {}
 
 private:
+    
+    // Déclaration des variables utiles
     double currentAngle;
     double angleDelta;
     double level;  // volume effectif joué
