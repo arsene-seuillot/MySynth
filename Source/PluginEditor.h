@@ -14,7 +14,7 @@
 //==============================================================================
 /**
 */
-class MySynthAudioProcessorEditor  : public juce::AudioProcessorEditor
+class MySynthAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::Timer
 {
 public:
     MySynthAudioProcessorEditor (MySynthAudioProcessor&);
@@ -23,6 +23,7 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
+    void timerCallback() override;
 
 private:
     // This reference is provided as a quick way for your editor to
@@ -30,8 +31,15 @@ private:
     MySynthAudioProcessor& audioProcessor;
     
     // Initialisation du fader et de son attache à une variable
-    juce::Slider fader;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> faderAttachment;
+    juce::Slider fader_tailoff;
+    juce::Slider fader_tailin;
+    juce::Slider fader_gain;
+    
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> faderTailoffAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> faderTailinAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> faderGainfAttachment;
+    
+    juce::Label infoLabel; // Étiquette sur le synthé pour afficher des infos dynamiquement
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MySynthAudioProcessorEditor)
 };
