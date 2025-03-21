@@ -22,6 +22,9 @@ MySynthAudioProcessor::MySynthAudioProcessor()
                        ), treeState(*this, nullptr, "PARAMETERS", createParameterLayout())
 #endif
 {
+    // On connecte le process externe
+    Process.start();
+    
     // Paramètres globaux du synthé
     synth.clearVoices();
     
@@ -34,14 +37,18 @@ MySynthAudioProcessor::MySynthAudioProcessor()
     treeState.addParameterListener("gain", this);
     treeState.addParameterListener("tail-off", this);
     treeState.addParameterListener("tail-in", this);
+    treeState.addParameterListener("debug", this);
     
 }
 
 MySynthAudioProcessor::~MySynthAudioProcessor()
 {
+    Process.stop();
     treeState.removeParameterListener("gain", this);
     treeState.removeParameterListener("tail-off", this);
     treeState.removeParameterListener("tail-in", this);
+    treeState.removeParameterListener("debug", this);
+    
 }
 
 // ON IMPLÉMENTE LA FONCTION QUI CRÉÉE LA LISTE DES PARAMÈTERES DE L'AUDIO-TREE
@@ -51,14 +58,16 @@ juce::AudioProcessorValueTreeState::ParameterLayout MySynthAudioProcessor::creat
     
     // Ici on crée les différents paramètres du ParameterLayout
     auto pGain = std::make_unique<juce::AudioParameterFloat>("gain", "Gain", -24.0, 24.0, 10.0);
-    auto pTailOff = std::make_unique<juce::AudioParameterFloat>("tail-off", "Tail Off", 0.0f, 1.0f, 0.5f); // Décroissance du volume
+    auto pTailOff = std::make_unique<juce::AudioParameterFloat>("tail-off", "Tail Off", 0.0f, 1.0f, 0.5f);
     auto pTailIn = std::make_unique<juce::AudioParameterFloat>("tail-in", "Tail In", 0.0f, 1.0f, 0.5f); // Décroissance du volume
     auto pFrequency = std::make_unique<juce::AudioParameterFloat>("frequency", "Frequency", 0.1f, 23000.0f, 10000.5f);
+    auto pDebug = std::make_unique<juce::AudioParameterFloat>("debug", "Debug", -100000.0f, 100000.0f, 10000.5f);
         
     params.push_back(std::move(pTailOff));
     params.push_back(std::move(pTailIn));
     params.push_back(std::move(pGain));
     params.push_back(std::move(pFrequency));
+    params.push_back(std::move(pDebug));
     
     return {params.begin(), params.end()};
 }
@@ -203,6 +212,18 @@ bool MySynthAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) 
 void MySynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     buffer.clear(); // Effacer l'ancien buffer audio
+    
+    // On récupère le buffer depuis le micro
+    juce::AudioBuffer<float>& micBuffer = Process.getBuffer();
+    
+    /*
+    // On mixe le son du micro et le son du synthétiseur
+    for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+    {
+        buffer.addFrom(channel, 0, micBuffer, channel, 0, buffer.getNumSamples());
+    }
+    */
+    
     synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
 }
 

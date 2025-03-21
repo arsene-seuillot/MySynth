@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "ExternalProcess.h"
 
 //==============================================================================
 // MySynthAudioProcessor
@@ -47,6 +48,7 @@ public:
     // DÉCLARATION DU VALUE-TREE
     juce::AudioProcessorValueTreeState treeState;
     
+    
     float getParameterValue(const juce::String& parameterID) const;
 
 private:
@@ -58,8 +60,12 @@ private:
     float currentSampleRate = 44100.0;
     bool isNotePlaying = false;  // Variable pour suivre si une note est active
     
+    // On ajoute un objet ExternalProcess du fichier externe
+    ExternalProcess Process;
+    
     // On déclare l'objet synthétiseur
     juce::Synthesiser synth;
+    
     
     // On déclare les variables du synthé
     float val = 0.0f;
