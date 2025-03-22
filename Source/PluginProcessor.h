@@ -3,8 +3,10 @@
 #include <JuceHeader.h>
 #include "ExternalProcess.h"
 
-//==============================================================================
-// MySynthAudioProcessor
+//==============================================================================//
+//                              MySynthAudioProcessor                           //
+//==============================================================================//
+
 class MySynthAudioProcessor  : public juce::AudioProcessor, juce::AudioProcessorValueTreeState::Listener
 {
 public:
@@ -46,8 +48,7 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     // DÉCLARATION DU VALUE-TREE
-    juce::AudioProcessorValueTreeState treeState;
-    
+    juce::AudioProcessorValueTreeState treeState;    
     
     float getParameterValue(const juce::String& parameterID) const;
 
@@ -59,6 +60,18 @@ private:
     float frequency = 440.0f;
     float currentSampleRate = 44100.0;
     bool isNotePlaying = false;  // Variable pour suivre si une note est active
+    
+    
+    
+    // Structure pour stocker les infos d'une note en cours
+    struct NoteInfo {
+        double frequency = 440.0;
+        double intensity = 1.0;
+        double phase = 0.0;
+    };
+    
+    std::vector<NoteInfo> activeNotes; // Vecteur qui stocke les notes
+    double sampleRate = 44100.0; // Mis à jour au démarrage
     
     // On ajoute un objet ExternalProcess du fichier externe
     ExternalProcess Process;
@@ -75,8 +88,19 @@ private:
     void parameterChanged(const juce::String &parameterID, float newValue) override;
 };
 
-//==============================================================================
-// SineWaveVoice
+
+
+
+
+
+
+
+//==============================================================================//
+//                          Gestion des notes                                   //
+//==============================================================================//
+
+
+
 class SineWaveVoice : public juce::SynthesiserVoice
 {
 public:
@@ -92,7 +116,7 @@ public:
 
     bool canPlaySound(juce::SynthesiserSound* sound) override
     {
-        return true;
+        return dynamic_cast<SineWaveVoice*> (sound) != nullptr;
     }
 
     void startNote(int midiNoteNumber, float velocity,
@@ -132,6 +156,26 @@ public:
     void setTailIn(float newTailIn)
     {
         tailinFactor = newTailIn;
+    }
+    
+    void playDetectedNote(const DetectedNote& note)
+    {
+        if (note.isActive)
+        {
+            auto sampleRate = getSampleRate();
+            if (sampleRate <= 0.0) return;
+
+            currentAngle = 0.0;
+            volume = note.velocity;
+            level = 0.002; // Évite un fade-in brutal
+            tailoff = false;
+            frequency = note.frequency;
+            angleDelta = (juce::MathConstants<double>::twoPi * frequency) / sampleRate;
+        }
+        else
+        {
+            stopNote(0.0f, true);
+        }
     }
     
     void renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override

@@ -217,13 +217,26 @@ void MySynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     float intensity = Process.getRMSLevel();
     *treeState.getRawParameterValue("debug") = intensity;
     
+    juce::ScopedNoDenormals noDenormals;
+        
     /*
     
-    // Effacer l'ancien buffer audio
-    buffer.clear();
-    // Faire le rendu audio : génère la sinusoide.
+    // Extraire les informations sonores à partir du buffer d'entrée
+    DetectedNote detectedNote = Process.analyzeAudio();
+
+    // Parcourir les voix de synthé et les mettre à jour avec les nouvelles infos
+    for (int i = 0; i < synth.getNumVoices(); ++i)
+    {
+        if (auto* voice = dynamic_cast<SineWaveVoice*>(synth.getVoice(i)))
+        {
+            voice->playDetectedNote(detectedNote);
+        }
+    }
+
+    buffer.clear(); // Efface le buffer avant de générer les nouvelles ondes
     synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
      */
+    
 }
 
 

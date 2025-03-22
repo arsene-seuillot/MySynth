@@ -48,3 +48,30 @@ float ExternalProcess::getRMSLevel()
     //return 10.0f;
 }
 
+DetectedNote ExternalProcess::analyzeAudio()
+{
+    std::lock_guard<std::mutex> lock(bufferMutex);
+
+    DetectedNote note;
+    
+    if (buffer.getNumSamples() == 0)
+        return note;
+
+    // Détection de l'intensité (RMS)
+    float rms = getRMSLevel();
+    note.velocity = juce::jmap(rms, 0.0f, 0.1f, 0.0f, 1.0f); // Normalisation
+
+    // Détection de la fréquence dominante
+    note.frequency = estimateFrequency(buffer);
+
+    // Active la note si l'intensité dépasse un seuil
+    note.isActive = note.velocity > 0.01f;
+
+    return note;
+}
+
+float ExternalProcess::estimateFrequency(const juce::AudioBuffer<float>& buffer)
+    {
+        // Implémente une analyse FFT ici (placeholder)
+        return 440.0f; // Exemple : toujours 440Hz pour tester
+    }
