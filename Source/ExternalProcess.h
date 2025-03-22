@@ -8,31 +8,32 @@
   ==============================================================================
 */
 
+
 #pragma once
 
 #include <JuceHeader.h>
 
-class ExternalProcess : public juce::AudioIODeviceCallback
+class ExternalProcess
 {
 public:
     ExternalProcess();
-    ~ExternalProcess() override;
+    ~ExternalProcess();
 
     void start();
     void stop();
 
-    // Callbacks audio
-    void audioDeviceAboutToStart(juce::AudioIODevice* device) override;
-    void audioDeviceStopped() override;
-    void audioDeviceIOCallback(const float** inputChannelData, int numInputChannels,
-                               float** outputChannelData, int numOutputChannels,
-                               int numSamples);
+    // Processus principal : copie l'audio du buffer reçu du DAW
+    void processAudio(const juce::AudioBuffer<float>& inputBuffer);
 
+    // Récupérer le buffer audio stocké
     juce::AudioBuffer<float>& getBuffer();
+    
+    // Retourne l'intensité sonore du buffer
+    float getRMSLevel();
 
 private:
-    juce::AudioDeviceManager audioDeviceManager;
     juce::AudioBuffer<float> buffer;
     std::mutex bufferMutex;
 };
+
 

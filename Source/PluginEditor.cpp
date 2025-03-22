@@ -69,6 +69,6 @@ void MySynthAudioProcessorEditor::resized()
 
 void MySynthAudioProcessorEditor::timerCallback()
 {
-    float tailoffValue = audioProcessor.getParameterValue("debug");
-    infoLabel.setText("Debug message : " + juce::String(tailoffValue, 2), juce::dontSendNotification);
+    float value = audioProcessor.getParameterValue("debug");
+    infoLabel.setText("Debug message : " + juce::String(value, 2), juce::dontSendNotification);
 }

@@ -10,55 +10,41 @@
 
 #include "ExternalProcess.h"
 
-ExternalProcess::ExternalProcess()
-{
-    audioDeviceManager.initialise(1, 0, nullptr, true); // 1 entrée (micro), 0 sortie
-    audioDeviceManager.addAudioCallback(this);
-}
+ExternalProcess::ExternalProcess() {}
+ExternalProcess::~ExternalProcess() {}
 
-ExternalProcess::~ExternalProcess()
-{
-    audioDeviceManager.removeAudioCallback(this);
-}
+void ExternalProcess::start() {}
 
-void ExternalProcess::start()
-{
-    audioDeviceManager.restartLastAudioDevice();
-}
+void ExternalProcess::stop() {}
 
-void ExternalProcess::stop()
+void ExternalProcess::processAudio(const juce::AudioBuffer<float>& inputBuffer)
 {
-    audioDeviceManager.closeAudioDevice();
-}
+    std::lock_guard<std::mutex> lock(bufferMutex);
+    
+    if (buffer.getNumSamples() != inputBuffer.getNumSamples())
+        buffer.setSize(inputBuffer.getNumChannels(), inputBuffer.getNumSamples(), false, false, true);
 
-void ExternalProcess::audioDeviceAboutToStart(juce::AudioIODevice* device)
-{
-    const int numSamples = device->getDefaultBufferSize();
-    buffer.setSize(1, numSamples); // 1 canal, N samples
-}
-
-void ExternalProcess::audioDeviceStopped()
-{
-    buffer.clear();
-}
-
-void ExternalProcess::audioDeviceIOCallback(const float** inputChannelData, int numInputChannels,
-                                            float** outputChannelData, int numOutputChannels,
-                                            int numSamples)
-{
-    if (numInputChannels > 0 && inputChannelData[0] != nullptr)
-    {
-        std::lock_guard<std::mutex> lock(bufferMutex);
-        buffer.copyFrom(0, 0, inputChannelData[0], numSamples); // Stocke l'audio du micro
-    }
-
-    // Efface la sortie pour éviter du bruit
-    for (int i = 0; i < numOutputChannels; ++i)
-        juce::FloatVectorOperations::clear(outputChannelData[i], numSamples);
+    buffer.makeCopyOf(inputBuffer);
 }
 
 juce::AudioBuffer<float>& ExternalProcess::getBuffer()
 {
     return buffer;
+}
+
+float ExternalProcess::getRMSLevel()
+{
+    std::lock_guard<std::mutex> lock(bufferMutex);
+
+    if (buffer.getNumSamples() == 0)
+        return 0.0f;
+
+    float totalRMS = 0.0f;
+
+    for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+        totalRMS += buffer.getRMSLevel(channel, 0, buffer.getNumSamples());
+
+    return totalRMS / static_cast<float>(buffer.getNumChannels()); // Moyenne sur tous les canaux
+    //return 10.0f;
 }
 

@@ -13,12 +13,12 @@
 MySynthAudioProcessor::MySynthAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
-                     #if ! JucePlugin_IsMidiEffect
-                      #if ! JucePlugin_IsSynth
+                     //#if ! JucePlugin_IsMidiEffect
+                      //#if ! JucePlugin_IsSynth
                        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                      #endif
+                      //#endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
-                     #endif
+                     //#endif
                        ), treeState(*this, nullptr, "PARAMETERS", createParameterLayout())
 #endif
 {
@@ -211,20 +211,19 @@ bool MySynthAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) 
 
 void MySynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    buffer.clear(); // Effacer l'ancien buffer audio
-    
-    // On récupère le buffer depuis le micro
-    juce::AudioBuffer<float>& micBuffer = Process.getBuffer();
+    // Vérifier si l'entrée audio est valide
+    if (getTotalNumInputChannels() > 0) {}
+    Process.processAudio(buffer); // Stocke l'entrée audio
+    float intensity = Process.getRMSLevel();
+    *treeState.getRawParameterValue("debug") = intensity;
     
     /*
-    // On mixe le son du micro et le son du synthétiseur
-    for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
-    {
-        buffer.addFrom(channel, 0, micBuffer, channel, 0, buffer.getNumSamples());
-    }
-    */
     
+    // Effacer l'ancien buffer audio
+    buffer.clear();
+    // Faire le rendu audio : génère la sinusoide.
     synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
+     */
 }
 
 
