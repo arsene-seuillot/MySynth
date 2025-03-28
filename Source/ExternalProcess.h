@@ -20,6 +20,7 @@ struct DetectedNote {
     bool isActive = false;   // Note active ou non
 };
 
+
 class ExternalProcess
 {
 public:
@@ -40,9 +41,22 @@ public:
 
     // Analyse l'audio et retourne une note détectée
     DetectedNote analyzeAudio();
+    
     float estimateFrequency(const juce::AudioBuffer<float>& buffer);
+    
+    bool isSoundPlayed();
 
 private:
-    juce::AudioBuffer<float> buffer;
+    juce::AudioBuffer<float> process_buffer;
     std::mutex bufferMutex;
+    
+    static constexpr int fftOrder = 10; // FFT de taille 1024 (2^10)
+    static constexpr int fftSize = 1 << fftOrder;
+
+    juce::dsp::FFT fft { fftOrder };
+    std::array<float, fftSize> fftData = { 0.0f };
+    juce::dsp::WindowingFunction<float> window { fftSize, juce::dsp::WindowingFunction<float>::hann };
+
+    float noiseSpectrum[fftSize / 2] = { 0.0f };
+    bool noiseEstimated = false;
 };

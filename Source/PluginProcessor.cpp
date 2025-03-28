@@ -215,10 +215,17 @@ void MySynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     if (getTotalNumInputChannels() > 0) {}
     Process.processAudio(buffer); // Stocke l'entrée audio
     float intensity = Process.getRMSLevel();
+    // On stocke ici le message de debug
     *treeState.getRawParameterValue("debug") = intensity;
+    
+    float SoundPlayed = Process.isSoundPlayed();
+    *treeState.getRawParameterValue("debug") = SoundPlayed;
     
     juce::ScopedNoDenormals noDenormals;
         
+    // Partie ou on fait des dingueries !! il faut revoir toutes les nouvelles implémentations
+    
+    
     /*
     
     // Extraire les informations sonores à partir du buffer d'entrée
