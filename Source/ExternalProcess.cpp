@@ -78,20 +78,10 @@ float ExternalProcess::estimateFrequency(const juce::AudioBuffer<float>& buffer)
 
 bool ExternalProcess::isSoundPlayed()
 {
-    juce::AudioBuffer<float>& micBuffer = getBuffer(); // Récupère le buffer du micro
-    
-    float rmsLevel = 0.0f; // Stocke le niveau RMS total
-    int totalSamples = 0;
+    //std::lock_guard<std::mutex> lock(bufferMutex); // Protéger l'accès au buffer
 
-    for (int channel = 0; channel < micBuffer.getNumChannels(); ++channel)
-    {
-        rmsLevel += micBuffer.getRMSLevel(channel, 0, micBuffer.getNumSamples());
-        totalSamples += micBuffer.getNumSamples();
-    }
-
-    rmsLevel /= micBuffer.getNumChannels(); // Moyenne des canaux
-
-    float threshold = 0.02; // Seuil à ajuster en fonction du bruit ambiant
+    float rmsLevel = getRMSLevel(); // Utilise directement la méthode existante
+    float threshold = 0.01f; // Ajuste selon le bruit ambiant
 
     return rmsLevel > threshold;
 }
