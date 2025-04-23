@@ -7,7 +7,7 @@
 */
 
 #pragma once
-
+#include "FFTDisplay.h"
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 
@@ -40,6 +40,9 @@ private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> faderGainfAttachment;
     
     juce::Label infoLabel; // Étiquette sur le synthé pour afficher des infos dynamiquement
+    
+    ExternalProcess& externalProcess; // Référence vers ton analyseur
+    FFTDisplay fftDisplay;  // Déclaration de l'objet FFTDisplay
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MySynthAudioProcessorEditor)
 };

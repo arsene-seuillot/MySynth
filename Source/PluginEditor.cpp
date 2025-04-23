@@ -5,14 +5,17 @@
 
   ==============================================================================
 */
-
+#include "FFTDisplay.h"
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
 //==============================================================================
 MySynthAudioProcessorEditor::MySynthAudioProcessorEditor (MySynthAudioProcessor& p)
-    : AudioProcessorEditor (&p), audioProcessor (p)
+    : AudioProcessorEditor (&p), audioProcessor (p), externalProcess (p.getExternalProcess())
 {
+    
+    startTimerHz(30);
+    //setSize(600, 400);
     
     // Slider du TailOff
     addAndMakeVisible(fader_tailoff);
@@ -43,8 +46,13 @@ MySynthAudioProcessorEditor::MySynthAudioProcessorEditor (MySynthAudioProcessor&
     addAndMakeVisible(infoLabel);
     startTimer(10); // Rafraîchissement toutes les 10ms
     
+    // Initialisation de fftDisplay
+    addAndMakeVisible(fftDisplay);  // Ajoute le composant à l'éditeur pour qu'il puisse être affiché
+    fftDisplay.setBounds(200, 100, 300, 150);  // Définir une position et taille de fftDisplay
+
+    
     // Taille de la fenêtre
-    setSize (400, 300);
+    setSize (1000, 600);
 }
 
 MySynthAudioProcessorEditor::~MySynthAudioProcessorEditor()
@@ -71,4 +79,10 @@ void MySynthAudioProcessorEditor::timerCallback()
 {
     float value = audioProcessor.getParameterValue("debug");
     infoLabel.setText("Debug message : " + juce::String(value, 2), juce::dontSendNotification);
+    
+    // Récupérer les données FFT calculées par ExternalProcess
+    std::vector<float> fftData = audioProcessor.getExternalProcess().getFFTData();
+
+    // Mettre à jour l'affichage avec les nouvelles données
+    fftDisplay.setFFTData(fftData);  // Appeler setFFTData sur fftDisplay
 }

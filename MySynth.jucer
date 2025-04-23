@@ -4,6 +4,8 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" pluginCharacteristicsValue="pluginIsMidiEffectPlugin">
   <MAINGROUP id="SqBIMd" name="MySynth">
     <GROUP id="{F8542703-9F42-AE39-2A55-0C2AA67EA167}" name="Source">
+      <FILE id="pmDEiz" name="FFTDisplay.cpp" compile="1" resource="0" file="Source/FFTDisplay.cpp"/>
+      <FILE id="BrLPnI" name="FFTDisplay.h" compile="0" resource="0" file="Source/FFTDisplay.h"/>
       <FILE id="LT2KMy" name="ExternalProcess.h" compile="0" resource="0"
             file="Source/ExternalProcess.h"/>
       <FILE id="WyJKs3" name="ExternalProcess.cpp" compile="1" resource="0"

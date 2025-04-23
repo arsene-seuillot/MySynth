@@ -5,7 +5,7 @@
 
   ==============================================================================
 */
-
+#include "FFTDisplay.h"
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
@@ -108,6 +108,11 @@ float MySynthAudioProcessor::getParameterValue(const juce::String& parameterID) 
 }
 
 //==============================================================================
+ExternalProcess& MySynthAudioProcessor::getExternalProcess()
+{
+    return Process;
+}
+
 const juce::String MySynthAudioProcessor::getName() const
 {
     return JucePlugin_Name;

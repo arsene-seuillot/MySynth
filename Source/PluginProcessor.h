@@ -51,6 +51,9 @@ public:
     juce::AudioProcessorValueTreeState treeState;    
     
     float getParameterValue(const juce::String& parameterID) const;
+    
+    ExternalProcess& getExternalProcess();
+
 
 private:
     //==============================================================================
@@ -86,6 +89,7 @@ private:
     // On crée un audio-tree pour lier des valeurs à des variables
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     void parameterChanged(const juce::String &parameterID, float newValue) override;
+    
 };
 
 

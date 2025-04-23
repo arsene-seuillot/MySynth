@@ -45,18 +45,23 @@ public:
     float estimateFrequency(const juce::AudioBuffer<float>& buffer);
     
     bool isSoundPlayed();
-
+    
+    std::vector<float> getFFTData();
+    
+    
+    
+    
 private:
     juce::AudioBuffer<float> process_buffer;
     std::mutex bufferMutex;
     
     static constexpr int fftOrder = 10; // FFT de taille 1024 (2^10)
     static constexpr int fftSize = 1 << fftOrder;
-
-    juce::dsp::FFT fft { fftOrder };
-    std::array<float, fftSize> fftData = { 0.0f };
-    juce::dsp::WindowingFunction<float> window { fftSize, juce::dsp::WindowingFunction<float>::hann };
-
+    
     float noiseSpectrum[fftSize / 2] = { 0.0f };
     bool noiseEstimated = false;
+    
+    juce::dsp::FFT fft;             // Objet FFT de JUCE
+    std::vector<float> fftData;     // Contiendra les résultats de la FFT
+    std::vector<float> windowedBuffer; // Buffer avec une fenêtre appliquée pour la FFT
 };
