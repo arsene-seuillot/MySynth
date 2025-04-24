@@ -31,23 +31,6 @@ void ExternalProcess::processAudio(const juce::AudioBuffer<float>& inputBuffer)
 
     process_buffer.makeCopyOf(inputBuffer);
     
-    // Vérifie si la taille du buffer est suffisamment grande
-    if (inputBuffer.getNumSamples() < 2048)
-    return;
-    
-    // Appliquer une fenêtre Hamming
-    for (int i = 0; i < 2048; ++i)
-    {
-        windowedBuffer[i] = inputBuffer.getReadPointer(0)[i] *
-                            (0.54f - 0.46f * cosf(2.0f * juce::MathConstants<float>::pi * i / 2048.0f));
-    }
-    
-    // Copie le signal fenêtré dans fftData
-    std::copy(windowedBuffer.begin(), windowedBuffer.end(), fftData.begin());
-
-    // Calculer la FFT
-    fft.performFrequencyOnlyForwardTransform(fftData.data());
-
 }
 
 juce::AudioBuffer<float>& ExternalProcess::getBuffer()
@@ -93,6 +76,28 @@ DetectedNote ExternalProcess::analyzeAudio()
     return note;
 }
 
+
+// Calcule et stocke le spectre
+void ExternalProcess::CalculateFFT() {
+    
+    // Vérifie si la taille du buffer est suffisamment grande
+    if (process_buffer.getNumSamples() < 2048)
+    return;
+    
+    // Appliquer une fenêtre Hamming
+    for (int i = 0; i < 2048; ++i)
+    {
+        windowedBuffer[i] = process_buffer.getReadPointer(0)[i] *
+                            (0.54f - 0.46f * cosf(2.0f * juce::MathConstants<float>::pi * i / 2048.0f));
+    }
+    
+    // Copie le signal fenêtré dans fftData
+    std::copy(windowedBuffer.begin(), windowedBuffer.end(), fftData.begin());
+
+    // Calculer la FFT
+    fft.performFrequencyOnlyForwardTransform(fftData.data());
+}
+
 float ExternalProcess::estimateFrequency(const juce::AudioBuffer<float>& buffer)
 {
     // Implémente une analyse FFT ici (placeholder)
@@ -109,6 +114,8 @@ bool ExternalProcess::isSoundPlayed()
     return rmsLevel > threshold;
 }
 
+
+// Renvoie le spectre
 std::vector<float> ExternalProcess::getFFTData()
 {
     std::lock_guard<std::mutex> lock(bufferMutex);
@@ -116,4 +123,36 @@ std::vector<float> ExternalProcess::getFFTData()
     // On renvoie uniquement la moitié basse du spectre (car la FFT est symétrique)
     return std::vector<float>(fftData.begin(), fftData.begin() + fftData.size() / 2);
 }
+
+
+
+// Renvoie le max du spectre
+float ExternalProcess::maxSpectrum() {
+    std::lock_guard<std::mutex> lock(bufferMutex);
+
+    size_t spectrumSize = fftData.size() / 2;
+
+    if (spectrumSize == 0)
+        return 2.0f;
+
+    float maxVal = 0.0f;
+    size_t maxIndex = 0;
+
+    // Trouver l'indice avec l'amplitude maximale
+    for (size_t i = 0; i < spectrumSize; ++i) {
+        if (fftData[i] > maxVal) {
+            maxVal = fftData[i];
+            maxIndex = i;
+        }
+    }
+    // Calculer la fréquence correspondante à l'indice max
+    float sampleRate = 44100.0f; // Remplace par ta fréquence d'échantillonnage si nécessaire
+    float frequencyResolution = sampleRate / static_cast<float>(fftSize);  // Résolution en fréquence
+    float maxFrequency = maxIndex * frequencyResolution;
+
+    return maxFrequency;
+}
+ 
+
+
 

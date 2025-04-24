@@ -46,7 +46,11 @@ public:
     
     bool isSoundPlayed();
     
+    void CalculateFFT();
+    
     std::vector<float> getFFTData();
+    
+    float maxSpectrum();
     
     
     

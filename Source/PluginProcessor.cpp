@@ -226,6 +226,9 @@ void MySynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     float SoundPlayed = Process.isSoundPlayed();
     *treeState.getRawParameterValue("debug") = SoundPlayed;
     
+    float maxSpectrum = Process.maxSpectrum();
+    *treeState.getRawParameterValue("debug") = maxSpectrum;
+    
     juce::ScopedNoDenormals noDenormals;
         
     // Partie ou on fait des dingueries !! il faut revoir toutes les nouvelles implémentations
